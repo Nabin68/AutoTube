@@ -1,3 +1,5 @@
+#fetch_trends/trends.py module
+
 import requests
 import json
 import os
@@ -73,11 +75,14 @@ class NewsHistoryManager:
         # Fetch latest tech news - sorted by publishedAt (most recent first)
         url = 'https://newsapi.org/v2/everything'
         params = {
-            'q': 'technology OR tech OR AI OR "artificial intelligence" OR ML OR "machine learning" OR gadgets OR software',
+            # Better search query with more specific tech terms
+            'q': '("artificial intelligence" OR "machine learning" OR "AI technology" OR "tech startup" OR "OpenAI" OR "ChatGPT" OR "Google AI" OR "Meta AI") AND (technology OR tech OR innovation)',
             'pageSize': 50,  # Fetch more to ensure we get a unique one
             'sortBy': 'publishedAt',  # Most recent first
             'language': 'en',
-            'apiKey': self.api_key
+            'apiKey': self.api_key,
+            # Optional: You can also filter by tech-related domains
+            # 'domains': 'techcrunch.com,theverge.com,wired.com,arstechnica.com,venturebeat.com'
         }
         
         try:
@@ -93,6 +98,24 @@ class NewsHistoryManager:
                     title = article.get('title', '').strip()
                     
                     if not title or title == '[Removed]':
+                        continue
+                    
+                    # Additional filter: Check if title/description contains tech-related keywords
+                    description = article.get('description', '') or ''
+                    combined_text = (title + ' ' + description).lower()
+                    
+                    # Tech-related keywords to verify relevance
+                    tech_keywords = [
+                        'ai', 'artificial intelligence', 'machine learning', 'neural network',
+                        'chatgpt', 'openai', 'google', 'meta', 'microsoft', 'apple',
+                        'technology', 'tech', 'startup', 'innovation', 'software',
+                        'robot', 'automation', 'algorithm', 'data science', 'llm'
+                    ]
+                    
+                    # Check if at least one tech keyword is in the content
+                    is_tech_related = any(keyword in combined_text for keyword in tech_keywords)
+                    
+                    if not is_tech_related:
                         continue
                     
                     # Check if it's not a duplicate
